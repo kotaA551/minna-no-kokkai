@@ -1,19 +1,21 @@
 // src/lib/fetcher.ts
-export async function fetcher<T = any>(url: string): Promise<T> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(await res.text());
-  return res.json() as Promise<T>;
-}
+type MutationArg<T> = { arg: T };
 
-export async function postJson<Arg = any, Res = any>(
+export async function postJson<TReq, TRes>(
   url: string,
-  { arg }: { arg: Arg }
-): Promise<Res> {
+  { arg }: MutationArg<TReq>
+): Promise<TRes> {
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(arg),
   });
-  if (!res.ok) throw new Error(await res.text());
-  return (await res.json()) as Res;
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  return (await res.json()) as TRes;
+}
+
+export async function getJson<TRes>(url: string): Promise<TRes> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  return (await res.json()) as TRes;
 }
