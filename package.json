@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "pnpm approve-builds --global @prisma/client @prisma/engines prisma @tailwindcss/oxide sharp && next build",
     "start": "next start",
-    "lint": "eslint"
+    "postbuild": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
