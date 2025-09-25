@@ -1,103 +1,160 @@
-import Image from "next/image";
+"use client";
+import { useState, useMemo } from "react";
+import useSWR from "swr";
+import VoteButtons from "@/components/VoteButtons";
 
-export default function Home() {
+type BillItem = {
+  id: string;
+  title: string;
+  text: string;
+  benefit: string;
+  up: number;
+  down: number;
+  ratio: number;
+  createdAt?: string;
+};
+
+type VideoItem = {
+  id: string;
+  title: string;
+  url: string;
+  createdAt?: string;
+};
+
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
+
+export default function HomePage() {
+  const [tab, setTab] = useState<"ALL" | "VIDEO" | "BILL">("ALL");
+
+  const { data: billData } = useSWR<{ bills: BillItem[] }>(
+    tab !== "VIDEO" ? "/api/bills" : null,
+    fetcher,
+    { refreshInterval: 5000 }
+  );
+  const { data: videoData } = useSWR<VideoItem[]>(
+    tab !== "BILL" ? "/api/videos" : null,
+    fetcher
+  );
+
+  const bills = billData?.bills ?? [];
+  const videos = videoData ?? [];
+
+  // 📌 新着順に統合
+  const allItems = useMemo(() => {
+    const merged = [
+      ...videos.map((v) => ({
+        type: "video" as const,
+        id: v.id,
+        title: v.title,
+        url: v.url,
+        createdAt: v.createdAt ?? v.id, // ファイル名で代用
+      })),
+      ...bills.map((b) => ({
+        type: "bill" as const,
+        id: b.id,
+        title: b.title,
+        text: b.text,
+        benefit: b.benefit,
+        up: b.up,
+        down: b.down,
+        ratio: b.ratio,
+        createdAt: b.createdAt ?? b.id,
+      })),
+    ];
+    // 新着順（createdAtが新しい順）
+    return merged.sort((a, b) =>
+      String(b.createdAt).localeCompare(String(a.createdAt))
+    );
+  }, [videos, bills]);
+
+  // タブごとの表示リスト
+  const itemsToShow =
+    tab === "ALL"
+      ? allItems
+      : tab === "VIDEO"
+      ? allItems.filter((i) => i.type === "video")
+      : allItems.filter((i) => i.type === "bill");
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-[100dvh]">
+      {/* 🔽 タブ */}
+      <div className="sticky top-0 z-10 bg-white/90 backdrop-blur border-b">
+        <div className="max-w-screen-sm mx-auto flex">
+          {(["ALL", "VIDEO", "BILL"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`w-1/3 py-3 text-sm font-semibold border-b-2 ${
+                tab === t ? "border-black" : "border-transparent text-gray-500"
+              }`}
+            >
+              {t === "ALL" ? "All" : t === "VIDEO" ? "Video" : "Bill"}
+            </button>
+          ))}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
+
+      {/* 🔽 縦スワイプ表示 */}
+      <section className="h-[calc(100dvh-48px-64px)] overflow-y-auto snap-y snap-mandatory">
+        {itemsToShow.length === 0 && (
+          <div className="flex items-center justify-center h-full">
+            <p>まだ投稿がありません。</p>
+          </div>
+        )}
+
+        {itemsToShow.map((item) => (
+          <article
+            key={item.id}
+            className="snap-start w-full h-[calc(100dvh-48px-64px)] flex items-center justify-center bg-white"
+          >
+            {item.type === "video" ? (
+              <div className="w-full h-full flex flex-col items-center justify-center">
+                <video
+                  src={item.url}
+                  controls
+                  className="w-full h-full object-contain bg-black"
+                />
+              </div>
+            ) : (
+              <div className="w-full h-full flex flex-col p-5 overflow-y-auto">
+                <h2 className="text-xl text-center font-bold mb-4">
+                  法案名：{item.title}
+                </h2>
+                <section className="pb-4 border-b">
+                  <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                    {item.text}
+                  </p>
+                </section>
+                <section className="py-4 border-b">
+                  <h3 className="text-sm font-semibold text-gray-600 mb-2">
+                    メリット
+                  </h3>
+                  {item.benefit ? (
+                    <ul className="list-disc pl-5 text-sm text-gray-800 space-y-1">
+                      {item.benefit
+                        .split(/\r?\n/)
+                        .map((s) => s.trim())
+                        .filter(Boolean)
+                        .map((line, i) => (
+                          <li key={i}>{line.replace(/^・\s*/, "")}</li>
+                        ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-gray-500">（未記入）</p>
+                  )}
+                </section>
+                <div className="mt-auto pt-4">
+                  <VoteButtons
+                    policyId={item.id}
+                    up={item.up ?? 0}
+                    down={item.down ?? 0}
+                  />
+                </div>
+              </div>
+            )}
+          </article>
+        ))}
+      </section>
     </div>
   );
 }

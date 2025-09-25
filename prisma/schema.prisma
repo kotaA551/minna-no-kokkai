@@ -1,0 +1,52 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Bill {
+  id        String    @id @default(cuid())
+  title     String
+  text      String
+  benefit   String
+  authorId  String
+  createdAt DateTime  @default(now())
+  votes     Vote[]
+  comments  Comment[]
+}
+
+model Vote {
+  id        String   @id @default(cuid())
+  userId    String
+  billId    String
+  bill      Bill     @relation(fields: [billId], references: [id])
+  value     String // ← enum化は後でOK
+  createdAt DateTime @default(now())
+
+  @@unique([userId, billId])
+  @@index([billId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  billId    String
+  bill      Bill     @relation(fields: [billId], references: [id])
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([billId])
+}
+
+model Video {
+  id        String   @id @default(cuid())
+  title     String
+  desc      String   @default("")
+  filename  String
+  createdAt DateTime @default(now())
+}
