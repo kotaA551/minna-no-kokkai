@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ensureUserId } from "@/lib/user";
+import { Bill, Vote } from "@prisma/client";
 
 export async function GET() {
   const bills = await prisma.bill.findMany({
@@ -9,22 +10,11 @@ export async function GET() {
     include: { votes: true },
   });
 
-  const data = bills.map((b) => {
+  const data = bills.map((b: Bill & { votes: Vote[] }) => {
     const up = b.votes.filter((v) => v.value === "UP").length;
     const down = b.votes.filter((v) => v.value === "DOWN").length;
     const total = up + down || 1;
-    const ratio = Math.round((up / total) * 100);
-
-    return {
-      id: b.id,
-      title: b.title,
-      text: b.text,
-      benefit: b.benefit,
-      up,
-      down,
-      ratio,
-      createdAt: b.createdAt,
-    };
+    return { ...b, up, down, ratio: Math.round((up / total) * 100) };
   });
 
   return NextResponse.json({ bills: data });
