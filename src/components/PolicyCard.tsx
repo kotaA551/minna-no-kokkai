@@ -1,4 +1,4 @@
-import { VoteButtons } from './VoteButtons'
+import VoteButtons from './VoteButtons'
 
 
 type Policy = {

@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import useSWR, { mutate as globalMutate } from "swr";
-import { fetcher } from "@/lib/fetcher";
+import {fetcher} from "@/lib/fetcher";
 
 type Comment = {
   id: string;
