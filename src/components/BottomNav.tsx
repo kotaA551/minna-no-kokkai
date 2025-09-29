@@ -1,5 +1,5 @@
 // src/components/BottomNav.tsx
-"use client"; 
+"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -9,11 +9,12 @@ export function BottomNav() {
   const items = [
     { href: "/", label: "HOME", icon: "/home.svg" },
     { href: "/post", label: "POST", icon: "/upload.svg" },
+    { href: "/election", label: "ELECTIONS", icon: "/elections.svg" }, 
     { href: "/mypage", label: "Mypage", icon: "/mypage.svg" },
   ];
   return (
     <nav className="fixed bottom-0 inset-x-0 z-50 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-      <ul className="mx-auto max-w-screen-sm grid grid-cols-3">
+      <ul className="mx-auto max-w-screen-sm grid grid-cols-4">
         {items.map(({ href, label, icon }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
           return (

@@ -1,40 +1,62 @@
 // src/app/api/votes/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { ensureUserId } from "@/lib/user";
+import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
+
+async function getSupabase() {
+  const cookieStore = await cookies();
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) { return cookieStore.get(name)?.value; },
+        set() {},
+        remove() {},
+      },
+    }
+  );
+}
 
 export async function POST(req: NextRequest) {
-  // ここを await にする
-  const uid = await ensureUserId(); // <- Promise<string> -> string
+  const supabase = await getSupabase();
+  const { data: u } = await supabase.auth.getUser();
+  const uid = u.user?.id ?? null;
 
   if (!uid) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
   const { policyId: billId, value } = (await req.json()) as {
-    policyId: string;
-    value: "UP" | "DOWN";
+    policyId: string; value: "UP" | "DOWN";
   };
 
   if (!billId || (value !== "UP" && value !== "DOWN")) {
     return NextResponse.json({ error: "bad request" }, { status: 400 });
   }
 
-  // 既存があれば更新、無ければ作成（1ユーザー1票を維持）
-  await prisma.vote.upsert({
-    where: { userId_billId: { userId: uid, billId } },
-    update: { value },
-    create: { userId: uid, billId, value },
-  });
+  // 1ユーザー1票（unique(user_id,bill_id) 前提）
+  const { error: upsertErr } = await supabase
+    .from("votes")
+    .upsert(
+      { user_id: uid, bill_id: billId, value },
+      { onConflict: "user_id,bill_id" }
+    );
+  if (upsertErr) {
+    return NextResponse.json({ error: upsertErr.message }, { status: 500 });
+  }
 
-  // 最新集計返す
-  const counts = await prisma.vote.groupBy({
-    by: ["value"],
-    where: { billId },
-    _count: { _all: true },
-  });
-  const up = counts.find(c => c.value === "UP")?._count._all ?? 0;
-  const down = counts.find(c => c.value === "DOWN")?._count._all ?? 0;
+  // 最新集計
+  const { data: votes, error: countErr } = await supabase
+    .from("votes")
+    .select("value")
+    .eq("bill_id", billId);
+  if (countErr) {
+    return NextResponse.json({ error: countErr.message }, { status: 500 });
+  }
+
+  const up = (votes ?? []).filter(v => v.value === "UP").length;
+  const down = (votes ?? []).filter(v => v.value === "DOWN").length;
 
   return NextResponse.json({ up, down });
 }
