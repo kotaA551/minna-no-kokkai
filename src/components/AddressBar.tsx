@@ -66,7 +66,7 @@ export default function AddressBar() {
   }, [val]);
 
   return (
-    <div className="rounded-2xl border bg-white p-4 space-y-2">
+    <div className="rounded-2xl border bg-white p-4 mt-8 space-y-2">
       <div className="flex gap-2">
         <select
           value={val.prefecture}

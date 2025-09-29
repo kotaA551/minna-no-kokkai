@@ -117,9 +117,9 @@ export default function ElectionTop() {
       </div>
 
       {/* 2) 投票期間（ダミー表示） */}
-      <div className="rounded-2xl border bg-white p-4">
-        <h2 className="text-lg font-bold">投票期間</h2>
-        <p className="text-sm text-gray-600">
+      <div className="pb-6 text-gray-600">
+        <h2 className="font-bold">投票期間</h2>
+        <p className="text-sm">
           例）2025年10月01日 00:00 〜 2025年10月14日 23:59（模擬投票）
         </p>
       </div>
@@ -131,7 +131,7 @@ export default function ElectionTop() {
           href="/election/matching"
           className="inline-flex items-center justify-center rounded-xl bg-black text-white px-4 py-2"
         >
-          投票マッチングへ
+          投票マッチング
         </Link>
       </div>
 

@@ -83,11 +83,11 @@ export default function ElectionHalfDonut({
           },
         },
       },
-      layout: { padding: 8 },
+      layout: { padding: { top: 32, right: 8, bottom: 28, left: 8 } },
     };
   }, [showLegend, cutout, unit, total]);
 
-  // 中央に合計値を描くカスタムプラグイン
+  // 中央テキストのプラグイン
   useEffect(() => {
     const plugin = {
       id: "centerText",
@@ -95,13 +95,16 @@ export default function ElectionHalfDonut({
         const { ctx, chartArea } = chart;
         if (!ctx || !chartArea) return;
         const cx = (chartArea.left + chartArea.right) / 2;
-        const cy = chartArea.top + (chartArea.bottom - chartArea.top) * 0.9; // 半円なので少し下
+        const cy = chartArea.top + (chartArea.bottom - chartArea.top) * 0.86; // 少し上に
+
         ctx.save();
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
+
+        // タイトルは chartArea 内に描く
         ctx.font = "600 14px system-ui, -apple-system, Segoe UI, Roboto, 'Noto Sans JP', sans-serif";
         ctx.fillStyle = "#111827";
-        ctx.fillText(`${title}`, cx, chartArea.top - 8);
+        ctx.fillText(`${title}`, cx, chartArea.top + 12);
 
         ctx.font = "700 20px system-ui, -apple-system, Segoe UI, Roboto, 'Noto Sans JP', sans-serif";
         ctx.fillStyle = "#111827";
@@ -109,12 +112,10 @@ export default function ElectionHalfDonut({
         ctx.restore();
       },
     };
-
     Chart.register(plugin);
-    return () => {
-      Chart.unregister(plugin);
-    };
+    return () => Chart.unregister(plugin);
   }, [title, total, unit]);
+
 
   // 描画・再描画
   useEffect(() => {

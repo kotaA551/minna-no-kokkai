@@ -15,7 +15,7 @@ export default function MyPage() {
   const items = data?.bills ?? [];
 
   return (
-    <section className="p-4 space-y-6 pb-24">
+    <section className="p-4 space-y-10 pb-24">
       {/* 認証 */}
       <div className="space-y-3">
         <h1 className="text-2xl font-extrabold">Mypage</h1>

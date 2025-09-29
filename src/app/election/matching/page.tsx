@@ -140,7 +140,7 @@ export default function MatchingPage() {
       <header className="pt-4">
         <h1 className="text-2xl font-extrabold">投票マッチング（衆院・仮版）</h1>
         <p className="text-sm text-gray-600 mt-1">
-          14問に答えると、各政党との一致度を表示します（データはデモ用・後日更新）。
+          20問に答えると、各政党との一致度を表示します（データはデモ用・後日更新）。
         </p>
       </header>
 
