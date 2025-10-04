@@ -6,6 +6,8 @@ import useSWR from "swr";
 import AddressBar from "@/components/AddressBar";
 import { supabase } from "@/lib/supabase-browser";
 import ElectionHalfDonut, { Slice } from "@/components/ElectionHalfDonut";
+import { mutate } from "swr";
+import { getDeviceId } from "@/lib/deviceId";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -75,22 +77,44 @@ export default function ElectionTop() {
     const payload = { district: districtCandidate.trim(), pr: prParty };
     const { data: userRes } = await supabase.auth.getUser();
     const user = userRes.user;
+    const deviceId = getDeviceId();
 
-    if (user) {
-      if (payload.district) {
-        await supabase.from("election_votes")
-          .insert({ user_id: user.id, kind: "district", value: payload.district });
-      }
-      if (payload.pr) {
-        await supabase.from("election_votes")
-          .insert({ user_id: user.id, kind: "pr", value: payload.pr });
-      }
-    } else {
-      localStorage.setItem("mock_vote_lower_house", JSON.stringify(payload));
+    // district
+    if (payload.district) {
+      await fetch("/api/election/vote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: "district",
+          value: payload.district,
+          userId: user?.id ?? null,
+          deviceId: user ? null : deviceId,
+        }),
+      });
     }
 
-    alert("オンライン模擬投票を記録しました（実際の効力はありません）。");
+    // pr
+    if (payload.pr) {
+      await fetch("/api/election/vote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: "pr",
+          value: payload.pr,
+          userId: user?.id ?? null,
+          deviceId: user ? null : deviceId,
+        }),
+      });
+    }
+
+    // ローカルにも控えを残したいなら任意で
+    localStorage.setItem("mock_vote_lower_house", JSON.stringify(payload));
+
     setSaved(payload);
+    alert("オンライン模擬投票を記録しました（実際の効力はありません）。");
+
+    // 半円ドーナツを即更新
+    mutate("/api/election/house");
   }
 
   return (
